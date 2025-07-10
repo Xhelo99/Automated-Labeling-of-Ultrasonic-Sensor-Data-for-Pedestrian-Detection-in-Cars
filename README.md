@@ -1,6 +1,6 @@
 # Automated-Labeling-of-Ultrasonic-Sensor-Data-for-Pedestrian-Detection-in-Cars
 
-![Alt Text](diagrams/car_image.jpg)
+<img src="images/gui_screenshot.png" alt="Main GUI" width="500"/>
 
 ![Alt Text](diagrams/diagram1.png)
 
