@@ -25,10 +25,13 @@ The GUI is built using Tkinter with two live views:
  * Right: real-time video with bounding box overlays and entry/exit annotations.
 
 The GUI includes:
- * A mode toggle button to switch between Left/Right and Approach/Away labeling logic
- * A scrollable log window showing messages
+ * A mode toggle button to switch between Left/Right, as shown in the figure below
 
-![Alt Text](diagrams/dip11.png)
+   ![Alt Text](diagrams/dip11.png)
+   
+ * And Approach/Away labeling logic, as shown in the figure below
+
+   ![Alt Text](diagrams/dip9.png)
 
 ### Physical Setup
 The figure shows the physical setup of the Red Pitaya and the camera mounted in front of the vehicle during the experiments. 
