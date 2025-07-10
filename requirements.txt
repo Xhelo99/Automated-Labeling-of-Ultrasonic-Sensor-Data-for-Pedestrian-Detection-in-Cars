@@ -1,0 +1,14 @@
+# GUI and system
+tk
+matplotlib
+pillow
+numpy
+pandas
+opencv-python
+torch
+torchvision
+paramiko
+
+# Optional but recommended for compatibility
+scipy
+scikit-learn
