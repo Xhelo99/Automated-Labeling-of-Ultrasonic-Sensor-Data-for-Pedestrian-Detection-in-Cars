@@ -31,8 +31,8 @@ from scipy.ndimage import uniform_filter1d
 HOST_IP = "192.168.128.1"
 DATA_PORT = 61231
 SSH_PORT = 22
-SSH_USER = os.environ.get("SSH_USER")
-SSH_PASS = os.environ.get("SSH_PASS")
+SSH_USER = "root"
+SSH_PASS = "root"
 BUFFER_MAX_BLOCKS = 200
 ADC_RAW_SIZE = 25000
 
@@ -178,6 +178,7 @@ class PlotManager:
         self.ax.set_xlabel("Samples [-]")
         self.ax.set_ylabel("Decimal Values")
         self.ax.grid(True)
+        
         self.fig.tight_layout()
         self.fig.canvas.draw()
 
@@ -321,7 +322,7 @@ class PersonTracker:
                 alert_callback(f"Person entering from {self.direction}")
 
                 if self.label_mgr:
-                    self.label_mgr.label_and_save(self.direction, self.detection_time)
+                    self.label_mgr.entry(f"{self.direction}_entry", self.detection_time)
 
                 self.person_in_frame = True
         else:
@@ -331,7 +332,7 @@ class PersonTracker:
                 alert_callback(f"Person exiting to {exit_dir}")
 
                 if self.label_mgr:
-                    self.label_mgr.label_and_save(exit_dir, current_millis())
+                    self.label_mgr.exit(self.direction)
 
                 self.person_in_frame = False
 
@@ -347,25 +348,30 @@ class LabelManager:
         os.makedirs(base_folder, exist_ok=True)
         self.sensor = sensor
         self.logger = logger
+        self.left_right_buffer = []
+        self.entry_dir = None
+        self.target_time = None
 
-    def label_and_save(self, direction, detection_time):
-        if not self.sensor.data_buffer:
-            return
-        # Find the closest sensor packet to the camera detection time
-        rec = min(self.sensor.data_buffer, key=lambda r: abs(r['timestamp'] - detection_time))
-        folder = os.path.join(self.base_folder, "left_right", direction)
+    def entry(self, direction, detection_time):
+        self.entry_dir = direction.replace('_entry', '')
+        self.target_time = detection_time + 1000
+        self.left_right_buffer = []
+
+    def packet(self, rec):
+        if self.entry_dir and rec['timestamp'] > self.target_time:
+            self.left_right_buffer.append(rec)
+
+    def exit(self, direction):
+        exit_dir = direction.replace('_exit', '')
+        folder = os.path.join(self.base_folder, f"entry_{self.entry_dir}_exit_{exit_dir}")
         os.makedirs(folder, exist_ok=True)
-        f_name = f"{rec['timestamp']}.csv"
-        pd.DataFrame(rec['data'], columns=['raw_adc']).to_csv(os.path.join(folder, f_name), index=False)
-        self.logger(f"{direction}: saved {f_name}")
-
-    def save_sequence_packet(self, direction, rec):
-        folder = os.path.join(self.base_folder, "left_right", "Person_detected")
-        os.makedirs(folder, exist_ok=True)
-
-        f_name = f"{int(rec['timestamp'])}.csv"
-        pd.DataFrame(rec['data'], columns=['raw_adc']).to_csv(os.path.join(folder, f_name), index=False)
-        self.logger(f"Person_detected: saved {f_name}")
+        for packet in self.left_right_buffer:
+            f_name = f"{packet['timestamp']}.csv"
+            pd.DataFrame(packet['data'], columns=['raw_adc']).to_csv(os.path.join(folder, f_name), index=False)
+        self.logger(f"Saved {len(self.left_right_buffer)} packets to {folder}")
+        self.left_right_buffer = []
+        self.entry_dir = None
+        self.target_time = None
 
     def handle_approach_away(self, rec, tracker):
         # Sensor movement detection
@@ -549,7 +555,7 @@ class AppGUI:
         if mode == "orthogonal":
             # Save while person is detected
             if self.person_detected:
-                self.label_mgr.save_sequence_packet(self.tracker.direction, rec)
+                self.label_mgr.packet(rec)
 
         # APPROACH/MOVE AWARE
         elif mode == "sensor":
@@ -615,7 +621,7 @@ class AppGUI:
     def browse_raw(self):
         path = filedialog.askdirectory()
         if path:
-            self.save_mgr.save_folder = path  # ✅ Correct — SaveManager handles raw signals
+            self.save_mgr.save_folder = path  # âœ… Correct â€” SaveManager handles raw signals
             self.raw_folder_entry.delete(0, tk.END)
             self.raw_folder_entry.insert(0, path)
             self.log(f"Raw save folder set to: {path}")
@@ -623,7 +629,7 @@ class AppGUI:
     def browse_label(self):
         path = filedialog.askdirectory()
         if path:
-            self.label_mgr.base_folder = path  # ✅ FIXED — LabelManager handles labeled data
+            self.label_mgr.base_folder = path  # âœ… FIXED â€” LabelManager handles labeled data
             self.label_folder_entry.delete(0, tk.END)
             self.label_folder_entry.insert(0, path)
             self.log(f"Label save folder set to: {path}")
@@ -683,11 +689,6 @@ class AppGUI:
                 alert_callback=self.log,
                 frame_center=frame.shape[1] // 2
             )
-
-            # Save labeled data if direction detected
-            if direction and any(x in direction for x in ["left", "right"]):
-                clean_dir = direction.split('_')[0]
-                self.label_mgr.label_and_save(clean_dir, current_millis())
 
             # Convert and display frame
             img = cv2.cvtColor(tracked_frame, cv2.COLOR_BGR2RGB)
