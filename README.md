@@ -45,9 +45,10 @@ The `labeled_data` directory contains all automatically labeled ultrasonic senso
 
 - **left_right/**:  
   Data is organized by the detected direction of pedestrian entry or exit, based on video tracking.
-  - **left/**: Ultrasonic data captured when a person is detected entering or exiting from the left side.
-  - **right/**: Ultrasonic data for right-side entry or exit.
-  - **person_detected/**: Sensor data as long as a person is detected.
+  - **entry_left_exit_left/**: Ultrasonic data captured when a person is entering left and exiting from the left side.
+  - **entry_left_exit_right/**: Ultrasonic data captured when a person is entering left and exiting from the left right.
+  - **entry_right_exit_right/**: Ultrasonic data captured when a person is entering from the right and exiting from the right side.
+  - **entry_right_exit_left/**: Ultrasonic data captured when a person is entering from the right and exiting from the left side.
 
 - **movement/**:  
   Data labeled according to pedestrian movement relative to the sensor.
@@ -60,7 +61,7 @@ Each subfolder contains time-stamped CSV files representing individual sensor ev
 
 
 
-![Alt Text](diagrams/diagram5.jpg)
+![Alt Text](diagrams/Untitled Diagram.jpg)
 
 ## System Overview
 
