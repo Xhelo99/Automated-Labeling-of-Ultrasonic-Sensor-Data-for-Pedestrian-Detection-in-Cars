@@ -61,7 +61,7 @@ Each subfolder contains time-stamped CSV files representing individual sensor ev
 
 
 
-![Alt Text](diagrams/Untitled Diagram.jpg)
+![Alt Text](diagrams/diagram7.jpg)
 
 ## System Overview
 
